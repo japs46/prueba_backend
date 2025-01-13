@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
+import com.backend.reactivo.app.domain.model.Franquicia;
 import com.backend.reactivo.app.domain.model.Sucursal;
 import com.backend.reactivo.app.infrastructure.config.RouterFunctionConfig;
 
@@ -81,6 +82,53 @@ public class SucursalHandlerTest {
 				.expectStatus().isBadRequest().expectHeader().contentType(MediaType.TEXT_PLAIN)
 				.expectBody(String.class)
 		        .isEqualTo("El objeto sucursal no puede ser null");
+	}
+	
+	@Test
+	void updateNombreSuccessTest() {
+		Long sucursalId = 1L;
+	    String nombre= "test";
+	    
+	    Sucursal updatedSucursal = new Sucursal(1L, "test",1L);
+	    
+	    Mono<ServerResponse> serverResponse = ServerResponse.ok()
+        .contentType(MediaType.APPLICATION_JSON)
+        .bodyValue(updatedSucursal);
+	    
+	    when(handler.updateNombre(any())).thenReturn(serverResponse);
+
+	    WebTestClient.bindToRouterFunction(routerFunctionConfig.routesSucursal(handler))
+		.build().put().uri("/api/sucursal/update-nombre/{id}", sucursalId)
+	            .contentType(MediaType.APPLICATION_JSON)
+	            .bodyValue(nombre)
+	            .exchange()
+	            .expectStatus().isOk()
+	            .expectBody()
+	            .jsonPath("$.id").isEqualTo(sucursalId)
+	            .jsonPath("$.nombre").isEqualTo("test")
+	            .jsonPath("$.idFranquicia").isEqualTo(1L);
+	}
+
+	@Test
+	void updateNombreNotFoundTest() {
+	    Long sucursalId = 999L;
+	    String nombre= "test";
+	    
+	    String mensajeErrorTest= "Sucursal no encontrado con id: "+sucursalId;
+	    
+	    Mono<ServerResponse> serverResponse = ServerResponse.badRequest()
+        .bodyValue(mensajeErrorTest);
+	    
+	    when(handler.updateNombre(any())).thenReturn(serverResponse);
+
+	    WebTestClient.bindToRouterFunction(routerFunctionConfig.routesSucursal(handler))
+		.build().put().uri("/api/sucursal/update-nombre/{id}", sucursalId)
+	            .contentType(MediaType.APPLICATION_JSON)
+	            .bodyValue(nombre)
+	            .exchange()
+	            .expectStatus().isBadRequest()
+	            .expectBody(String.class)
+	            .isEqualTo("Sucursal no encontrado con id: " + sucursalId);
 	}
 
 }
