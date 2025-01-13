@@ -1,13 +1,10 @@
-package com.backend.reactivo.app.aplication.services;
+package com.backend.reactivo.app.domain.ports.in;
 
 import com.backend.reactivo.app.domain.model.Sucursal;
 
 import reactor.core.publisher.Mono;
 
-public interface SucursalService {
+public interface UpdateSucursalUseCase {
 
-	public Mono<Sucursal> save(Sucursal sucursal);
-	
 	public Mono<Sucursal> updateNombre(Long id, String nombre);
-	
 }
