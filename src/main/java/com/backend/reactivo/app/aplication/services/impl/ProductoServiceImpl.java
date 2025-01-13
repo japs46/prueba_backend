@@ -49,4 +49,9 @@ public class ProductoServiceImpl implements ProductoService{
 		return retrieveProductoUseCase.findProductoConMayorStockPorFranquicia(franquiciaId);
 	}
 
+	@Override
+	public Mono<Producto> updateNombre(Long id, String nombre) {
+		return updateProductoUseCase.updateNombre(id, nombre);
+	}
+
 }

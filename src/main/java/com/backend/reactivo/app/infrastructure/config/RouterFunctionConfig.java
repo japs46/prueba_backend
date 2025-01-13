@@ -31,6 +31,7 @@ public class RouterFunctionConfig {
 		return RouterFunctions.route(POST("/api/producto"), productoHandler::create)
 				.andRoute(DELETE("/api/producto/{id}"), productoHandler::delete)
 				.andRoute(PUT("/api/producto/update-stock/{id}"), productoHandler::updateStock)
+				.andRoute(PUT("/api/producto/update-nombre/{id}"), productoHandler::updateNombre)
 				.andRoute(GET("/api/producto/mayor-stock/franquicia/{franquiciaId}"),
 						productoHandler::getProductosConMayorStockPorFranquicia);
 	}

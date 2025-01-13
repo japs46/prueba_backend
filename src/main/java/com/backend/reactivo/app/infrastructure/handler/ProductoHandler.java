@@ -93,6 +93,27 @@ public class ProductoHandler {
 	            });
 	}
 	
+	public Mono<ServerResponse> updateNombre(ServerRequest serverRequest) {
+	    LOG.info("Inicio de actualización de nombre producto");
+
+	    Long id = Long.parseLong(serverRequest.pathVariable("id"));
+	    Mono<String> monoNombre = serverRequest.bodyToMono(String.class);
+
+	    return monoNombre
+	            .flatMap(nombre -> productoService.updateNombre(id, nombre))
+	            .flatMap(updatedProducto -> ServerResponse.ok()
+	                    .contentType(MediaType.APPLICATION_JSON)
+	                    .bodyValue(updatedProducto))
+	            .onErrorResume(IllegalArgumentException.class, ex -> {
+	                LOG.error("Error al actualizar el nombre: " + ex.getMessage());
+	                return ServerResponse.badRequest()
+	                        .bodyValue(ex.getMessage());
+	            })
+	            .doFinally(signalType -> {
+	                LOG.info("Finalizó el proceso de actualización de nombre producto. Estado: " + signalType);
+	            });
+	}
+	
 	public Mono<ServerResponse> getProductosConMayorStockPorFranquicia(ServerRequest serverRequest) {
         Long franquiciaId = Long.parseLong(serverRequest.pathVariable("franquiciaId"));
         return ServerResponse.ok()
