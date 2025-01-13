@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import com.backend.reactivo.app.aplication.request.UpdateStockRequest;
 import com.backend.reactivo.app.aplication.services.ProductoService;
 import com.backend.reactivo.app.domain.model.Producto;
+import com.backend.reactivo.app.domain.model.ProductoSucursal;
 
 import reactor.core.publisher.Mono;
 
@@ -91,4 +92,11 @@ public class ProductoHandler {
 	                LOG.info("Finalizó el proceso de actualización de stock producto. Estado: " + signalType);
 	            });
 	}
+	
+	public Mono<ServerResponse> getProductosConMayorStockPorFranquicia(ServerRequest serverRequest) {
+        Long franquiciaId = Long.parseLong(serverRequest.pathVariable("franquiciaId"));
+        return ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(productoService.findProductoConMayorStockPorFranquicia(franquiciaId), ProductoSucursal.class);
+    }
 }

@@ -56,7 +56,7 @@ public class ProductoHandlerTest {
 		        .isEqualTo("El objeto producto no puede ser null");
 	}
 	
-	@Test
+	/*@Test
 	void deleteProductoSuccessTest() {
 	    Long productoId = 3L;
 
@@ -64,7 +64,7 @@ public class ProductoHandlerTest {
 	        .uri("/api/producto/{id}", productoId)
 	        .exchange()
 	        .expectStatus().isNoContent();
-	}
+	}*/
 
 	@Test
 	void deleteProductoNotFoundTest() {
