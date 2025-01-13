@@ -28,7 +28,9 @@ public class RouterFunctionConfig {
 	public RouterFunction<ServerResponse> routesProducto(ProductoHandler productoHandler){
 		return RouterFunctions.route(POST("/api/producto"), productoHandler::create)
 				.andRoute(DELETE("/api/producto/{id}"), productoHandler::delete)
-				.andRoute(PUT("/api/producto/update-stock/{id}"), productoHandler::updateStock);
+				.andRoute(PUT("/api/producto/update-stock/{id}"), productoHandler::updateStock)
+				.andRoute(GET("/api/producto/mayor-stock/franquicia/{franquiciaId}"),
+						productoHandler::getProductosConMayorStockPorFranquicia);
 	}
 
 }

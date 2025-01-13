@@ -12,9 +12,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.backend.reactivo.app.domain.model.Producto;
+import com.backend.reactivo.app.domain.model.ProductoSucursal;
 import com.backend.reactivo.app.infrastructure.entities.ProductoEntity;
 import com.backend.reactivo.app.infrastructure.repositories.ProductoEntityRepository;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -72,6 +74,29 @@ public class ProductoEntityRepositoryAdapterTest {
                 .verifyComplete();
 
         verify(productoEntityRepository).deleteById(productoId);
+	}
+	
+	@Test
+	void findProductoConMayorStockPorFranquiciaTest() {
+
+		Long franquiciaId = 1L;
+
+        // Simula los datos que devolvería el repositorio
+        ProductoSucursal producto1 = new ProductoSucursal(1L, "Producto A", 4L,1L,"sucursal1");
+        ProductoSucursal producto2 = new ProductoSucursal(2L, "Producto B", 5L,2L,"sucursal2");
+
+        when(productoEntityRepository.findProductoConMayorStockPorFranquicia(anyLong()))
+                .thenReturn(Flux.just(producto1, producto2));
+
+        // Llama al método del adaptador
+        Flux<ProductoSucursal> result = productoEntityRepositoryAdapter.findProductoConMayorStockPorFranquicia(franquiciaId);
+
+        // Verifica los resultados con StepVerifier
+        StepVerifier.create(result)
+                .expectNextMatches(producto -> producto.getProductoId().equals(1L) && producto.getProductoStock() == 4L
+                && producto.getProductoNombre().equals("Producto A") && producto.getSucursalNombre().equals("sucursal1"))
+                .expectNextMatches(producto -> producto.getProductoId().equals(2L) && producto.getProductoStock() == 5L)
+                .verifyComplete();
 	}
 	
 }
