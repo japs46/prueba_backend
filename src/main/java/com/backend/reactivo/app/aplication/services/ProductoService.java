@@ -15,4 +15,6 @@ public interface ProductoService {
 	public Mono<Producto> updateStock(Long id, Long stock);
 	
 	public Flux<ProductoSucursal> findProductoConMayorStockPorFranquicia(Long franquiciaId);
+	
+	public Mono<Producto> updateNombre(Long id, String nombre);
 }

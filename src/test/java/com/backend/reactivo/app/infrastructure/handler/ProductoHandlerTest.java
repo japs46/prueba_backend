@@ -167,4 +167,50 @@ public class ProductoHandlerTest {
 	            .expectBody(String.class)
 	            .isEqualTo("Producto no encontrado con id: " + productoId);
 	}
+	
+	@Test
+	void updateNombreTest() {
+	    Long productoId = 1L;
+	    String nombre= "test";
+	    
+	    Producto updatedProducto = new Producto(1L, "test", 4L,1L);
+	    
+	    Mono<ServerResponse> serverResponse = ServerResponse.ok()
+        .contentType(MediaType.APPLICATION_JSON)
+        .bodyValue(updatedProducto);
+	    
+	    when(handler.updateNombre(any())).thenReturn(serverResponse);
+
+	    WebTestClient.bindToRouterFunction(routerFunctionConfig.routesProducto(handler))
+		.build().put().uri("/api/producto/update-nombre/{id}", productoId)
+	            .contentType(MediaType.APPLICATION_JSON)
+	            .bodyValue(nombre)
+	            .exchange()
+	            .expectStatus().isOk()
+	            .expectBody()
+	            .jsonPath("$.id").isEqualTo(productoId)
+	            .jsonPath("$.stock").isEqualTo(4L);
+	}
+
+	@Test
+	void updateNombreNotFoundTest() {
+	    Long productoId = 999L;
+	    String nombre= "test";
+	    
+	    String mensajeErrorTest= "Producto no encontrado con id: "+productoId;
+	    
+	    Mono<ServerResponse> serverResponse = ServerResponse.badRequest()
+        .bodyValue(mensajeErrorTest);
+	    
+	    when(handler.updateNombre(any())).thenReturn(serverResponse);
+
+	    WebTestClient.bindToRouterFunction(routerFunctionConfig.routesProducto(handler))
+		.build().put().uri("/api/producto/update-nombre/{id}", productoId)
+	            .contentType(MediaType.APPLICATION_JSON)
+	            .bodyValue(nombre)
+	            .exchange()
+	            .expectStatus().isBadRequest()
+	            .expectBody(String.class)
+	            .isEqualTo("Producto no encontrado con id: " + productoId);
+	}
 }

@@ -7,4 +7,6 @@ import reactor.core.publisher.Mono;
 public interface UpdateProductoUseCase {
 
 	public Mono<Producto> updateStock(Long id, Long stock);
+	
+	public Mono<Producto> updateNombre(Long id, String nombre);
 }
