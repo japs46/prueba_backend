@@ -3,11 +3,13 @@ package com.backend.reactivo.app.infrastructure.adapters;
 import org.springframework.stereotype.Repository;
 
 import com.backend.reactivo.app.domain.model.Producto;
+import com.backend.reactivo.app.domain.model.ProductoSucursal;
 import com.backend.reactivo.app.domain.ports.out.ProductoRepositoryPort;
 import com.backend.reactivo.app.infrastructure.entities.ProductoEntity;
 import com.backend.reactivo.app.infrastructure.mappers.ProductoMapper;
 import com.backend.reactivo.app.infrastructure.repositories.ProductoEntityRepository;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Repository
@@ -36,6 +38,11 @@ public class ProductoEntityRepositoryAdapter implements ProductoRepositoryPort{
 	public Mono<Producto> findById(Long id) {
 		return productoEntityRepository.findById(id)
 				.map(ProductoMapper::toDomain);
+	}
+
+	@Override
+	public Flux<ProductoSucursal> findProductoConMayorStockPorFranquicia(Long franquiciaId) {
+		return productoEntityRepository.findProductoConMayorStockPorFranquicia(franquiciaId);
 	}
 
 }
