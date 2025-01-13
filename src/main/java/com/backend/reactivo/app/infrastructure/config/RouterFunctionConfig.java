@@ -16,7 +16,8 @@ public class RouterFunctionConfig {
 	
 	@Bean
 	public RouterFunction<ServerResponse> routesFranquicia(FranquiciaHandler franquiciaHandler){
-		return RouterFunctions.route(POST("/api/franquicia"), franquiciaHandler::create);
+		return RouterFunctions.route(POST("/api/franquicia"), franquiciaHandler::create)
+				.andRoute(PUT("/api/franquicia/update-nombre/{id}"),franquiciaHandler::updateNombre);
 	}
 	
 	@Bean
