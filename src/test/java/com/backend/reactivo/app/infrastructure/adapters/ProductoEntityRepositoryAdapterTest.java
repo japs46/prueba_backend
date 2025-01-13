@@ -1,6 +1,8 @@
 package com.backend.reactivo.app.infrastructure.adapters;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
@@ -40,6 +42,36 @@ public class ProductoEntityRepositoryAdapterTest {
 				&& p.getStock().equals(3L)
 				&& p.getIdSucursal().equals(1L))
 				.verifyComplete();
+	}
+	
+	@Test
+	void findByIdTest() {
+
+		ProductoEntity productoEntity = new ProductoEntity(1L, "test", 3L,1L);
+
+		when(productoEntityRepository.findById(anyLong())).thenReturn(Mono.just(productoEntity));
+
+		Mono<Producto> productoMono = productoEntityRepositoryAdapter.findById(1L);
+
+		StepVerifier.create(productoMono).expectNextMatches(p -> p.getId().equals(1L) 
+				&& p.getNombre().equals("test")
+				&& p.getStock().equals(3L))
+				.verifyComplete();
+	}
+	
+	@Test
+	void deleteByIdTest() {
+
+		Long productoId = 1L;
+
+		when(productoEntityRepository.deleteById(anyLong())).thenReturn(Mono.empty());
+
+		Mono<Void> result = productoEntityRepositoryAdapter.delete(productoId);
+
+        StepVerifier.create(result)
+                .verifyComplete();
+
+        verify(productoEntityRepository).deleteById(productoId);
 	}
 	
 }

@@ -54,4 +54,26 @@ public class ProductoHandlerTest {
 				.expectBody(String.class)
 		        .isEqualTo("El objeto producto no puede ser null");
 	}
+	
+	@Test
+	void deleteProductoSuccessTest() {
+	    Long productoId = 3L;
+
+	    webTestClient.delete()
+	        .uri("/api/producto/{id}", productoId)
+	        .exchange()
+	        .expectStatus().isNoContent();
+	}
+
+	@Test
+	void deleteProductoNotFoundTest() {
+	    Long productoId = 999L;
+
+	    webTestClient.delete()
+	        .uri("/api/producto/{id}", productoId)
+	        .exchange()
+	        .expectStatus().isBadRequest()
+	        .expectBody(String.class)
+	        .isEqualTo("Error eliminando el producto: Producto no encontrado con id: " + productoId);
+	}
 }
