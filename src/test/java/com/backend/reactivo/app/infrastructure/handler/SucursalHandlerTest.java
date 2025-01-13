@@ -15,7 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
-import com.backend.reactivo.app.domain.model.Franquicia;
 import com.backend.reactivo.app.domain.model.Sucursal;
 import com.backend.reactivo.app.infrastructure.config.RouterFunctionConfig;
 

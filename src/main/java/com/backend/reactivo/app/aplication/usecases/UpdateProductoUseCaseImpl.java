@@ -32,4 +32,19 @@ public class UpdateProductoUseCaseImpl implements UpdateProductoUseCase{
 	            });
 	}
 
+	@Override
+	public Mono<Producto> updateNombre(Long id, String nombre) {
+		return productoRepositoryPort.findById(id)
+	            .switchIfEmpty(Mono.error(new IllegalArgumentException("Producto no encontrado con id: " + id)))
+	            .flatMap(producto -> {
+	                Producto updatedProducto = new Producto(
+	                        producto.getId(),
+	                        nombre,
+	                        producto.getStock(),
+	                        producto.getIdSucursal()
+	                );
+	                return productoRepositoryPort.save(updatedProducto);
+	            });
+	}
+
 }
