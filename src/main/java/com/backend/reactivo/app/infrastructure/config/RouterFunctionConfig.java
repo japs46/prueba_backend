@@ -26,7 +26,8 @@ public class RouterFunctionConfig {
 	
 	@Bean
 	public RouterFunction<ServerResponse> routesProducto(ProductoHandler productoHandler){
-		return RouterFunctions.route(POST("/api/producto"), productoHandler::create);
+		return RouterFunctions.route(POST("/api/producto"), productoHandler::create)
+				.andRoute(DELETE("/api/producto/{id}"), productoHandler::delete);
 	}
 
 }

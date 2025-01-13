@@ -1,5 +1,6 @@
 package com.backend.reactivo.app.aplication.services.impl;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.backend.reactivo.app.domain.model.Producto;
 import com.backend.reactivo.app.domain.ports.in.CreateProductoUseCase;
+import com.backend.reactivo.app.domain.ports.in.DeleteProductoUseCase;
 
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -20,8 +22,11 @@ public class ProductoServiceImplTest {
 	@Mock
 	private CreateProductoUseCase createProductoUseCase;
 	
+	@Mock
+	private DeleteProductoUseCase deleteProductoUseCase;
+	
 	@InjectMocks
-	private ProductoServiceImpl sucursalService;
+	private ProductoServiceImpl productoService;
 	
 	@Test
 	void savetest() {
@@ -30,14 +35,29 @@ public class ProductoServiceImplTest {
 		
 		when(createProductoUseCase.save(producto)).thenReturn(Mono.just(producto));
 
-		Mono<Producto> productoMono = sucursalService.save(producto);
+		Mono<Producto> productoMono = productoService.save(producto);
 
 		StepVerifier
 		.create(productoMono)
-		.expectNextMatches(f -> f.getId().equals(1L) 
-				&& f.getNombre().equals("test")
-				&& f.getStock().equals(3L)
-				&& f.getIdSucursal().equals(1L))
+		.expectNextMatches(p -> p.getId().equals(1L) 
+				&& p.getNombre().equals("test")
+				&& p.getStock().equals(3L)
+				&& p.getIdSucursal().equals(1L))
 				.verifyComplete();
+	}
+	
+	@Test
+	void deleteTest() {
+
+        Long productoId = 1L;
+
+        when(deleteProductoUseCase.delete(productoId)).thenReturn(Mono.empty());
+
+        Mono<Void> result = productoService.delete(productoId);
+
+        StepVerifier.create(result)
+                .verifyComplete();
+
+        verify(deleteProductoUseCase).delete(productoId);
 	}
 }
