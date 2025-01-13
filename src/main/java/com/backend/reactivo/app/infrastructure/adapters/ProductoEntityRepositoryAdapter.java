@@ -27,4 +27,15 @@ public class ProductoEntityRepositoryAdapter implements ProductoRepositoryPort{
 				.map(ProductoMapper::toDomain);
 	}
 
+	@Override
+	public Mono<Void> delete(Long id) {
+		return productoEntityRepository.deleteById(id);
+	}
+
+	@Override
+	public Mono<Producto> findById(Long id) {
+		return productoEntityRepository.findById(id)
+				.map(ProductoMapper::toDomain);
+	}
+
 }

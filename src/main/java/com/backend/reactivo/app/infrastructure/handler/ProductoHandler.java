@@ -52,4 +52,20 @@ public class ProductoHandler {
                     LOG.info("Finalizo el proceso de creación de producto. Estado: " + signalType);
                 });
 	}
+	
+	public Mono<ServerResponse> delete(ServerRequest serverRequest){
+		LOG.info("Inicio Eliminación de producto");
+	
+		Long id = Long.parseLong(serverRequest.pathVariable("id"));
+		
+		return productoService.delete(id)
+                .then(ServerResponse.noContent().build())
+                .onErrorResume(e -> {
+                    return ServerResponse.badRequest()
+                            .bodyValue("Error eliminando el producto: " + e.getMessage());
+                })
+                .doFinally(signalType -> {
+                    LOG.info("Finalizo el proceso de eliminación del producto. Estado: " + signalType);
+                });
+	}
 }
