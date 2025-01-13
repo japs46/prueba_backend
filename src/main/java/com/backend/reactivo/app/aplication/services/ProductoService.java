@@ -9,4 +9,6 @@ public interface ProductoService {
 	public Mono<Producto> save(Producto producto);
 	
 	public Mono<Void> delete(Long id);
+	
+	public Mono<Producto> updateStock(Long id, Long stock);
 }

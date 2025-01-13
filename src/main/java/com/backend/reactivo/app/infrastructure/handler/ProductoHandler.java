@@ -10,6 +10,7 @@ import org.springframework.validation.BindException;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
+import com.backend.reactivo.app.aplication.request.UpdateStockRequest;
 import com.backend.reactivo.app.aplication.services.ProductoService;
 import com.backend.reactivo.app.domain.model.Producto;
 
@@ -67,5 +68,27 @@ public class ProductoHandler {
                 .doFinally(signalType -> {
                     LOG.info("Finalizo el proceso de eliminación del producto. Estado: " + signalType);
                 });
+	}
+	
+	public Mono<ServerResponse> updateStock(ServerRequest serverRequest) {
+	    LOG.info("Inicio de actualización de stock producto");
+
+	    Long id = Long.parseLong(serverRequest.pathVariable("id"));
+	    Mono<UpdateStockRequest> monoStock = serverRequest.bodyToMono(UpdateStockRequest.class);
+
+	    return monoStock
+	    		.map(UpdateStockRequest::getStock)
+	            .flatMap(stock -> productoService.updateStock(id, stock))
+	            .flatMap(updatedProducto -> ServerResponse.ok()
+	                    .contentType(MediaType.APPLICATION_JSON)
+	                    .bodyValue(updatedProducto))
+	            .onErrorResume(IllegalArgumentException.class, ex -> {
+	                LOG.error("Error al actualizar el stock: " + ex.getMessage());
+	                return ServerResponse.badRequest()
+	                        .bodyValue(ex.getMessage());
+	            })
+	            .doFinally(signalType -> {
+	                LOG.info("Finalizó el proceso de actualización de stock producto. Estado: " + signalType);
+	            });
 	}
 }
