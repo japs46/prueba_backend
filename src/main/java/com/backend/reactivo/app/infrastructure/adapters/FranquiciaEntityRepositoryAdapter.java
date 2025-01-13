@@ -29,4 +29,10 @@ public class FranquiciaEntityRepositoryAdapter implements FranquiciaRepositoryPo
 
 	}
 
+	@Override
+	public Mono<Franquicia> findById(Long id) {
+		return franquiciaEntityRepository.findById(id)
+				.map(FranquiciaMapper::toDomain);
+	}
+
 }

@@ -7,4 +7,6 @@ import reactor.core.publisher.Mono;
 public interface FranquiciaRepositoryPort {
 
 	public Mono<Franquicia> save(Franquicia franquicia);
+	
+	public Mono<Franquicia> findById(Long id);
 }

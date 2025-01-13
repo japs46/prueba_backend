@@ -48,7 +48,7 @@ public class FranquiciaHandlerTest {
 		webTestClient.post().uri("/api/franquicia").contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON).body(Mono.empty(), Franquicia.class).exchange()
 				.expectStatus().isBadRequest().expectHeader().contentType(MediaType.TEXT_PLAIN)
-				.expectBody(String.class) // Validamos que el cuerpo sea un string
+				.expectBody(String.class)
 		        .isEqualTo("El objeto Franquicia no puede ser null");
 	}
 
