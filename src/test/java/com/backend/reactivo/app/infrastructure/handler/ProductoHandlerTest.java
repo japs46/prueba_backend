@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import com.backend.reactivo.app.aplication.request.UpdateStockRequest;
 import com.backend.reactivo.app.domain.model.Producto;
 import com.backend.reactivo.app.domain.model.Sucursal;
 
@@ -75,5 +76,34 @@ public class ProductoHandlerTest {
 	        .expectStatus().isBadRequest()
 	        .expectBody(String.class)
 	        .isEqualTo("Error eliminando el producto: Producto no encontrado con id: " + productoId);
+	}
+	
+	@Test
+	void updateStockTest() {
+	    Long productoId = 4L;
+	    UpdateStockRequest updateStockRequest= new UpdateStockRequest(4L);
+
+	    webTestClient.put().uri("/api/producto/update-stock/{id}", productoId)
+	            .contentType(MediaType.APPLICATION_JSON)
+	            .bodyValue(updateStockRequest)
+	            .exchange()
+	            .expectStatus().isOk()
+	            .expectBody()
+	            .jsonPath("$.id").isEqualTo(productoId)
+	            .jsonPath("$.stock").isEqualTo(4L);
+	}
+
+	@Test
+	void updateStockNotFoundTest() {
+	    Long productoId = 999L;
+	    UpdateStockRequest updateStockRequest= new UpdateStockRequest(4L);
+
+	    webTestClient.put().uri("/api/producto/update-stock/{id}", productoId)
+	            .contentType(MediaType.APPLICATION_JSON)
+	            .bodyValue(updateStockRequest)
+	            .exchange()
+	            .expectStatus().isBadRequest()
+	            .expectBody(String.class)
+	            .isEqualTo("Producto no encontrado con id: " + productoId);
 	}
 }
