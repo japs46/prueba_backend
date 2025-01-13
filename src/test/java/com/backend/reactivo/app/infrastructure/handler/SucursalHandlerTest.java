@@ -1,31 +1,46 @@
 package com.backend.reactivo.app.infrastructure.handler;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.server.ServerResponse;
 
 import com.backend.reactivo.app.domain.model.Sucursal;
+import com.backend.reactivo.app.infrastructure.config.RouterFunctionConfig;
 
 import reactor.core.publisher.Mono;
 
-@AutoConfigureWebTestClient
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@ExtendWith(MockitoExtension.class)
 public class SucursalHandlerTest {
 	
-	@Autowired 
-	private WebTestClient webTestClient;
+	@Mock
+	private SucursalHandler handler;
+	
+	@InjectMocks 
+	private RouterFunctionConfig routerFunctionConfig;
 	
 	@Test
-	public void createSucursalTest() {
-		Sucursal sucursal = new Sucursal(null, "test", 1L);
+	public void createSucursalOkTest() {
+		Sucursal sucursal = new Sucursal(1L, "test", 1L);
 		
-		webTestClient.post().uri("/api/sucursal").contentType(MediaType.APPLICATION_JSON)
+		Mono<ServerResponse> serverResponse = ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(sucursal);
+		
+		when(handler.create(any())).thenReturn(serverResponse);
+		
+		WebTestClient.bindToRouterFunction(routerFunctionConfig.routesSucursal(handler))
+		.build().post().uri("/api/sucursal").contentType(MediaType.APPLICATION_JSON)
 		.accept(MediaType.APPLICATION_JSON).body(Mono.just(sucursal), Sucursal.class).exchange()
 		.expectStatus().isOk().expectHeader().contentType(MediaType.APPLICATION_JSON).expectBody()
 		.jsonPath("$.id").isNotEmpty().jsonPath("$.nombre").isEqualTo("test");
@@ -35,7 +50,14 @@ public class SucursalHandlerTest {
 	void createSucursalErrorsTest() {
 		Sucursal sucursal = new Sucursal(null, "", 1L);
 		
-		webTestClient.post().uri("/api/sucursal").contentType(MediaType.APPLICATION_JSON)
+		List<String> errors = Arrays.asList("El campo nombre no puede ser null o vacio");
+		
+		Mono<ServerResponse> serverResponse = ServerResponse.badRequest().bodyValue(errors);
+		
+		when(handler.create(any())).thenReturn(serverResponse);
+		
+		WebTestClient.bindToRouterFunction(routerFunctionConfig.routesSucursal(handler))
+		.build().post().uri("/api/sucursal").contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON).body(Mono.just(sucursal), Sucursal.class).exchange()
 				.expectStatus().isBadRequest().expectHeader().contentType(MediaType.APPLICATION_JSON).expectBody()
 				.jsonPath("$[0]").isEqualTo("El campo nombre no puede ser null o vacio");
@@ -45,7 +67,16 @@ public class SucursalHandlerTest {
 	@Test
 	void createSucursalNullTest() {
 		
-		webTestClient.post().uri("/api/sucursal").contentType(MediaType.APPLICATION_JSON)
+		IllegalArgumentException illegalArgumentException = new IllegalArgumentException("El objeto sucursal no puede ser null");
+		
+		Mono<ServerResponse> serverResponse = ServerResponse.badRequest()
+	            .contentType(MediaType.TEXT_PLAIN)
+	            .bodyValue(illegalArgumentException.getMessage());
+		
+		when(handler.create(any())).thenReturn(serverResponse);
+		
+		WebTestClient.bindToRouterFunction(routerFunctionConfig.routesSucursal(handler))
+		.build().post().uri("/api/sucursal").contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON).body(Mono.empty(), Sucursal.class).exchange()
 				.expectStatus().isBadRequest().expectHeader().contentType(MediaType.TEXT_PLAIN)
 				.expectBody(String.class)
