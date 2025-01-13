@@ -54,4 +54,25 @@ public class FranquiciaHandler {
                 });
 	}
 	
+	public Mono<ServerResponse> updateNombre(ServerRequest serverRequest) {
+	    LOG.info("Inicio de actualización de nombre franquicia");
+
+	    Long id = Long.parseLong(serverRequest.pathVariable("id"));
+	    Mono<String> monoNombre = serverRequest.bodyToMono(String.class);
+
+	    return monoNombre
+	            .flatMap(nombre -> franquiciaService.updateNombre(id, nombre))
+	            .flatMap(updatedFranquicia -> ServerResponse.ok()
+	                    .contentType(MediaType.APPLICATION_JSON)
+	                    .bodyValue(updatedFranquicia))
+	            .onErrorResume(IllegalArgumentException.class, ex -> {
+	                LOG.error("Error al actualizar el nombre: " + ex.getMessage());
+	                return ServerResponse.badRequest()
+	                        .bodyValue(ex.getMessage());
+	            })
+	            .doFinally(signalType -> {
+	                LOG.info("Finalizó el proceso de actualización de nombre franquicia. Estado: " + signalType);
+	            });
+	}
+	
 }
