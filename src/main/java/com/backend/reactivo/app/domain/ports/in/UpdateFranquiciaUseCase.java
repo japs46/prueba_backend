@@ -1,12 +1,10 @@
-package com.backend.reactivo.app.aplication.services;
+package com.backend.reactivo.app.domain.ports.in;
 
 import com.backend.reactivo.app.domain.model.Franquicia;
 
 import reactor.core.publisher.Mono;
 
-public interface FranquiciaService {
+public interface UpdateFranquiciaUseCase {
 
-	public Mono<Franquicia> save(Franquicia franquicia);
-	
 	public Mono<Franquicia> updateNombre(Long id, String nombre);
 }
