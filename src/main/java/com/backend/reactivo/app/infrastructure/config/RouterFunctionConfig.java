@@ -22,7 +22,8 @@ public class RouterFunctionConfig {
 	
 	@Bean
 	public RouterFunction<ServerResponse> routesSucursal(SucursalHandler sucursalHandler){
-		return RouterFunctions.route(POST("/api/sucursal"), sucursalHandler::create);
+		return RouterFunctions.route(POST("/api/sucursal"), sucursalHandler::create)
+				.andRoute(PUT("/api/sucursal/update-nombre/{id}"),sucursalHandler::updateNombre);
 	}
 	
 	@Bean
