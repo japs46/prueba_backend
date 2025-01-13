@@ -1,8 +1,8 @@
-package com.backend.reactivo.app.application.services.impl;
+package com.backend.reactivo.app.aplication.services.impl;
 
 import org.springframework.stereotype.Service;
 
-import com.backend.reactivo.app.application.services.FranquiciaService;
+import com.backend.reactivo.app.aplication.services.FranquiciaService;
 import com.backend.reactivo.app.domain.model.Franquicia;
 import com.backend.reactivo.app.domain.ports.in.CreateFranquiciaUseCase;
 

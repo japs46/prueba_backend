@@ -2,14 +2,16 @@ package com.backend.reactivo.app.infrastructure.handler;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.BindException;
-import org.springframework.validation.Validator;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
-import com.backend.reactivo.app.application.services.FranquiciaService;
+import com.backend.reactivo.app.aplication.services.FranquiciaService;
+import com.backend.reactivo.app.aplication.usecases.CreateFranquiciaUseCaseImpl;
 import com.backend.reactivo.app.domain.model.Franquicia;
 
 import reactor.core.publisher.Mono;
@@ -17,35 +19,39 @@ import reactor.core.publisher.Mono;
 @Component
 public class FranquiciaHandler {
 
+	private final Logger LOG = LoggerFactory.getLogger(CreateFranquiciaUseCaseImpl.class);
+
 	private final FranquiciaService franquiciaService;
-	private final Validator validator;
-	
-	public FranquiciaHandler(FranquiciaService franquiciaService, Validator validator) {
+
+	public FranquiciaHandler(FranquiciaService franquiciaService) {
 		this.franquiciaService = franquiciaService;
-		this.validator = validator;
 	}
 
 	public Mono<ServerResponse> create(ServerRequest serverRequest){
+		LOG.info("Inicio creación de nueva franquicia");
 		
-		Mono<Franquicia> monoFranquisia = serverRequest.bodyToMono(Franquicia.class);
-		
-		return monoFranquisia.flatMap(franquisia ->{
-			BindException errors = new BindException(franquisia, Franquicia.class.getName());
-            validator.validate(franquisia, errors);
-            if (errors.hasErrors()) {
-                return Mono.error(errors);
-            }
-			return franquiciaService.save(franquisia);
-		}).flatMap(franquisia ->{
-			return ServerResponse.ok()
-			.contentType(MediaType.APPLICATION_JSON)
-			.bodyValue(franquisia);
-		}).onErrorResume(BindException.class, ex -> {
-			List<String> errores = ex.getAllErrors().stream()
-                    .map(err -> err.getDefaultMessage()) 
-                    .toList();
-            return ServerResponse.badRequest().bodyValue(errores);
-        });
-				
+		Mono<Franquicia> monoFranquicia = serverRequest.bodyToMono(Franquicia.class);
+		return monoFranquicia
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("El objeto Franquicia no puede ser null")))
+                .flatMap(franquiciaService::save)
+                .flatMap(franquicia -> ServerResponse.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(franquicia))
+                .onErrorResume(IllegalArgumentException.class, ex ->{
+                		LOG.error("Error al guardar la franquicia: " + ex.getMessage());
+                		 return ServerResponse.badRequest()
+                		            .contentType(MediaType.TEXT_PLAIN)
+                		            .bodyValue(ex.getMessage());
+                 })
+                .onErrorResume(BindException.class, ex -> {
+                    List<String> errores = ex.getAllErrors().stream()
+                            .map(err -> err.getDefaultMessage())
+                            .toList();
+                    LOG.error("Error al guardar la franquicia: " + errores);
+                    return ServerResponse.badRequest().bodyValue(errores);
+                }).doFinally(signalType -> {
+                    LOG.info("Finalizo el proceso de creación de franquicia. Estado: " + signalType);
+                });
 	}
+	
 }

@@ -1,4 +1,4 @@
-package com.backend.reactivo.app.application.services;
+package com.backend.reactivo.app.aplication.services;
 
 import com.backend.reactivo.app.domain.model.Franquicia;
 
