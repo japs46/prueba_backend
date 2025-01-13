@@ -1,6 +1,7 @@
 package com.backend.reactivo.app.infrastructure.adapters;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,21 @@ public class SucursalEntityRepositoryAdapterTest {
 		StepVerifier.create(sucursalMono).expectNextMatches(f -> f.getId().equals(1L) 
 				&& f.getNombre().equals("test")
 				&& f.getIdFranquicia().equals(1L))
+				.verifyComplete();
+	}
+	
+	@Test
+	void findByIdTest() {
+
+		SucursalEntity sucursalEntity = new SucursalEntity(1L, "test", 1L);
+
+		when(sucursalEntityRepository.findById(anyLong())).thenReturn(Mono.just(sucursalEntity));
+
+		Mono<Sucursal> sucursalMono = sucursalEntityRepositoryAdapter.findById(1L);
+
+		StepVerifier.create(sucursalMono).expectNextMatches(s -> s.getId().equals(1L) 
+				&& s.getNombre().equals("test")
+				&& s.getIdFranquicia().equals(1L))
 				.verifyComplete();
 	}
 }

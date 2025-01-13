@@ -26,7 +26,7 @@ public class SucursalMapperTest {
 	}
 	
 	@Test
-	public void franquiciaMapperToEntityTest() {
+	public void sucursalMapperToEntityTest() {
 		
 		Sucursal domain = new Sucursal(1L, "test" , 1L);
 
@@ -39,7 +39,7 @@ public class SucursalMapperTest {
 	}
 	
 	@Test
-	public void franquiciaMapperToEntityIdNullTest() {
+	public void sucursalMapperToEntityIdNullTest() {
 		
 		Sucursal domain = new Sucursal(null, "test",1L);
 
