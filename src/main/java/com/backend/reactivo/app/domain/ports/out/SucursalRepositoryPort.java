@@ -7,4 +7,6 @@ import reactor.core.publisher.Mono;
 public interface SucursalRepositoryPort {
 
 	public Mono<Sucursal> save(Sucursal sucursal);
+	
+	public Mono<Sucursal> findById(Long id);
 }
