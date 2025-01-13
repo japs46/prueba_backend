@@ -8,7 +8,7 @@ public class Franquicia {
 	private final Long id;
 	
 	@NotEmpty(message = "El campo nombre no puede ser null o vacio")
-	@Size(max = 13, message= "El campo nombre debe tener 255 caracteres como maximo")
+	@Size(max = 255, message= "El campo nombre debe tener 255 caracteres como maximo")
 	private final String nombre;
 	
 	public Franquicia(Long id, String nombre) {
