@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Validator;
 
-import com.backend.reactivo.app.domain.model.Franquicia;
 import com.backend.reactivo.app.domain.model.Sucursal;
 import com.backend.reactivo.app.domain.ports.in.CreateSucursalUseCase;
 import com.backend.reactivo.app.domain.ports.in.RetrieveFranquiciaUseCase;
@@ -43,7 +42,7 @@ public class CreateSucursalUseCaseImpl implements CreateSucursalUseCase{
 	}
 	
 	private Mono<Sucursal> validate(Sucursal sucursal) {
-		BindException errors = new BindException(sucursal, Franquicia.class.getName());
+		BindException errors = new BindException(sucursal, Sucursal.class.getName());
 		validator.validate(sucursal, errors);
 		if (errors.hasErrors()) {
 			return Mono.error(errors);

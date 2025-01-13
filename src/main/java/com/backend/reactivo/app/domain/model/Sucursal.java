@@ -2,6 +2,7 @@ package com.backend.reactivo.app.domain.model;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class Sucursal {
@@ -10,7 +11,7 @@ public class Sucursal {
 	@NotEmpty(message = "El campo nombre no puede ser null o vacio")
 	@Size(max = 255, message= "El campo nombre debe tener 255 caracteres como maximo")
 	private final String nombre;
-	@NotEmpty(message = "el campo idFranquicia no puede ser null")
+	@NotNull(message = "el campo idFranquicia no puede ser null")
 	@Min(value = 1,message = "el campo idFranquicia debe ser positivo y mayor que 0")
 	private final Long idFranquicia;
 	
