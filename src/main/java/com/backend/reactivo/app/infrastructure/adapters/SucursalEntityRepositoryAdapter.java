@@ -27,5 +27,11 @@ public class SucursalEntityRepositoryAdapter implements SucursalRepositoryPort{
 		return SucursalEntityRepository.save(sucursalEntity)
 				.map(SucursalMapper::toDomain);
 	}
+	
+	@Override
+	public Mono<Sucursal> findById(Long id) {
+		return SucursalEntityRepository.findById(id)
+				.map(SucursalMapper::toDomain);
+	}
 
 }
