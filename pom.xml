@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.backend.reactivo</groupId>
-	<artifactId>Prueba-Backend</artifactId>
+	<artifactId>Prueba_Backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Prueba-Backend</name>
+	<name>Prueba_Backend</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
@@ -88,7 +88,20 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
 		</plugins>
+		<finalName>prueba-backend</finalName>
 	</build>
 
 </project>
