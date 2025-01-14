@@ -1,6 +1,7 @@
 package com.backend.reactivo.app.aplication.services.impl;
 
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -15,6 +16,7 @@ import com.backend.reactivo.app.domain.model.ProductoSucursal;
 import com.backend.reactivo.app.domain.ports.in.CreateProductoUseCase;
 import com.backend.reactivo.app.domain.ports.in.DeleteProductoUseCase;
 import com.backend.reactivo.app.domain.ports.in.RetrieveProductoUseCase;
+import com.backend.reactivo.app.domain.ports.in.UpdateProductoUseCase;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -31,6 +33,9 @@ public class ProductoServiceImplTest {
 	
 	@Mock
 	private RetrieveProductoUseCase retrieveProductoUseCase;
+	
+	@Mock
+	private UpdateProductoUseCase updateProductoUseCase;
 	
 	@InjectMocks
 	private ProductoServiceImpl productoService;
@@ -89,6 +94,42 @@ public class ProductoServiceImplTest {
                 && producto.getProductoNombre().equals("Producto A") && producto.getSucursalNombre().equals("sucursal1"))
                 .expectNextMatches(producto -> producto.getProductoId().equals(2L) && producto.getProductoStock() == 5L)
                 .verifyComplete();
+	}
+	
+	@Test
+	void updateStockSuccesstest() {
+		
+		Producto producto = new Producto(1L, "test",3L,1L);
+		
+		when(updateProductoUseCase.updateStock(anyLong(),anyLong())).thenReturn(Mono.just(producto));
+
+		Mono<Producto> productoMono = productoService.updateStock(1L,3L);
+
+		StepVerifier
+		.create(productoMono)
+		.expectNextMatches(p -> p.getId().equals(1L) 
+				&& p.getNombre().equals("test")
+				&& p.getStock().equals(3L)
+				&& p.getIdSucursal().equals(1L))
+				.verifyComplete();
+	}
+	
+	@Test
+	void updateNombreSuccesstest() {
+		
+		Producto producto = new Producto(1L, "test",3L,1L);
+		
+		when(updateProductoUseCase.updateNombre(anyLong(),anyString())).thenReturn(Mono.just(producto));
+
+		Mono<Producto> productoMono = productoService.updateNombre(1L,"test");
+
+		StepVerifier
+		.create(productoMono)
+		.expectNextMatches(p -> p.getId().equals(1L) 
+				&& p.getNombre().equals("test")
+				&& p.getStock().equals(3L)
+				&& p.getIdSucursal().equals(1L))
+				.verifyComplete();
 	}
 	
 }
