@@ -11,7 +11,6 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import com.backend.reactivo.app.aplication.services.FranquiciaService;
-import com.backend.reactivo.app.aplication.usecases.CreateFranquiciaUseCaseImpl;
 import com.backend.reactivo.app.domain.model.Franquicia;
 
 import reactor.core.publisher.Mono;
@@ -19,7 +18,7 @@ import reactor.core.publisher.Mono;
 @Component
 public class FranquiciaHandler {
 
-	private final Logger LOG = LoggerFactory.getLogger(CreateFranquiciaUseCaseImpl.class);
+	private final Logger LOG = LoggerFactory.getLogger(FranquiciaHandler.class);
 
 	private final FranquiciaService franquiciaService;
 
