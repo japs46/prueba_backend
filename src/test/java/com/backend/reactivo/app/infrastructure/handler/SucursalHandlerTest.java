@@ -1,133 +1,129 @@
 package com.backend.reactivo.app.infrastructure.handler;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.mock.web.reactive.function.server.MockServerRequest;
+import org.springframework.validation.BindException;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
+import com.backend.reactivo.app.aplication.services.SucursalService;
 import com.backend.reactivo.app.domain.model.Sucursal;
-import com.backend.reactivo.app.infrastructure.config.RouterFunctionConfig;
 
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 @ExtendWith(MockitoExtension.class)
 public class SucursalHandlerTest {
-	
+
 	@Mock
-	private SucursalHandler handler;
-	
-	@InjectMocks 
-	private RouterFunctionConfig routerFunctionConfig;
-	
+	private SucursalService sucursalService;
+
+	@InjectMocks
+	private SucursalHandler sucursalHandler;
+
 	@Test
-	public void createSucursalOkTest() {
+	public void createSuccessTest() {
+
 		Sucursal sucursal = new Sucursal(1L, "test", 1L);
-		
-		Mono<ServerResponse> serverResponse = ServerResponse.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(sucursal);
-		
-		when(handler.create(any())).thenReturn(serverResponse);
-		
-		WebTestClient.bindToRouterFunction(routerFunctionConfig.routesSucursal(handler))
-		.build().post().uri("/api/sucursal").contentType(MediaType.APPLICATION_JSON)
-		.accept(MediaType.APPLICATION_JSON).body(Mono.just(sucursal), Sucursal.class).exchange()
-		.expectStatus().isOk().expectHeader().contentType(MediaType.APPLICATION_JSON).expectBody()
-		.jsonPath("$.id").isNotEmpty().jsonPath("$.nombre").isEqualTo("test");
-	}
-	
-	@Test
-	void createSucursalErrorsTest() {
-		Sucursal sucursal = new Sucursal(null, "", 1L);
-		
-		List<String> errors = Arrays.asList("El campo nombre no puede ser null o vacio");
-		
-		Mono<ServerResponse> serverResponse = ServerResponse.badRequest().bodyValue(errors);
-		
-		when(handler.create(any())).thenReturn(serverResponse);
-		
-		WebTestClient.bindToRouterFunction(routerFunctionConfig.routesSucursal(handler))
-		.build().post().uri("/api/sucursal").contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON).body(Mono.just(sucursal), Sucursal.class).exchange()
-				.expectStatus().isBadRequest().expectHeader().contentType(MediaType.APPLICATION_JSON).expectBody()
-				.jsonPath("$[0]").isEqualTo("El campo nombre no puede ser null o vacio");
+		Mono<Sucursal> sucursalMono = Mono.just(sucursal);
 
-	}
-	
-	@Test
-	void createSucursalNullTest() {
-		
-		IllegalArgumentException illegalArgumentException = new IllegalArgumentException("El objeto sucursal no puede ser null");
-		
-		Mono<ServerResponse> serverResponse = ServerResponse.badRequest()
-	            .contentType(MediaType.TEXT_PLAIN)
-	            .bodyValue(illegalArgumentException.getMessage());
-		
-		when(handler.create(any())).thenReturn(serverResponse);
-		
-		WebTestClient.bindToRouterFunction(routerFunctionConfig.routesSucursal(handler))
-		.build().post().uri("/api/sucursal").contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON).body(Mono.empty(), Sucursal.class).exchange()
-				.expectStatus().isBadRequest().expectHeader().contentType(MediaType.TEXT_PLAIN)
-				.expectBody(String.class)
-		        .isEqualTo("El objeto sucursal no puede ser null");
-	}
-	
-	@Test
-	void updateNombreSuccessTest() {
-		Long sucursalId = 1L;
-	    String nombre= "test";
-	    
-	    Sucursal updatedSucursal = new Sucursal(1L, "test",1L);
-	    
-	    Mono<ServerResponse> serverResponse = ServerResponse.ok()
-        .contentType(MediaType.APPLICATION_JSON)
-        .bodyValue(updatedSucursal);
-	    
-	    when(handler.updateNombre(any())).thenReturn(serverResponse);
+		when(sucursalService.save(any(Sucursal.class))).thenReturn(sucursalMono);
 
-	    WebTestClient.bindToRouterFunction(routerFunctionConfig.routesSucursal(handler))
-		.build().put().uri("/api/sucursal/update-nombre/{id}", sucursalId)
-	            .contentType(MediaType.APPLICATION_JSON)
-	            .bodyValue(nombre)
-	            .exchange()
-	            .expectStatus().isOk()
-	            .expectBody()
-	            .jsonPath("$.id").isEqualTo(sucursalId)
-	            .jsonPath("$.nombre").isEqualTo("test")
-	            .jsonPath("$.idFranquicia").isEqualTo(1L);
+		MockServerRequest mockRequest = MockServerRequest.builder().body(Mono.just(sucursal));
+
+		Mono<ServerResponse> responseMono = sucursalHandler.create(mockRequest);
+
+		StepVerifier.create(responseMono).consumeNextWith(response -> {
+			assertEquals(HttpStatus.OK, response.statusCode());
+			assertEquals(MediaType.APPLICATION_JSON, response.headers().getContentType());
+		}).verifyComplete();
+
+		verify(sucursalService).save(any(Sucursal.class));
 	}
 
 	@Test
-	void updateNombreNotFoundTest() {
-	    Long sucursalId = 999L;
-	    String nombre= "test";
-	    
-	    String mensajeErrorTest= "Sucursal no encontrado con id: "+sucursalId;
-	    
-	    Mono<ServerResponse> serverResponse = ServerResponse.badRequest()
-        .bodyValue(mensajeErrorTest);
-	    
-	    when(handler.updateNombre(any())).thenReturn(serverResponse);
+	void testCreateWithEmptyBody() {
+		MockServerRequest mockRequest = MockServerRequest.builder().body(Mono.empty());
 
-	    WebTestClient.bindToRouterFunction(routerFunctionConfig.routesSucursal(handler))
-		.build().put().uri("/api/sucursal/update-nombre/{id}", sucursalId)
-	            .contentType(MediaType.APPLICATION_JSON)
-	            .bodyValue(nombre)
-	            .exchange()
-	            .expectStatus().isBadRequest()
-	            .expectBody(String.class)
-	            .isEqualTo("Sucursal no encontrado con id: " + sucursalId);
+		Mono<ServerResponse> responseMono = sucursalHandler.create(mockRequest);
+
+		StepVerifier.create(responseMono).consumeNextWith(response -> {
+			assertEquals(HttpStatus.BAD_REQUEST, response.statusCode());
+			assertEquals(MediaType.TEXT_PLAIN, response.headers().getContentType());
+		}).verifyComplete();
+
+		verifyNoInteractions(sucursalService);
 	}
 
+	@Test
+	void testCreateWithValidationError() {
+		Sucursal sucursalError = new Sucursal(null, "",1L);
+		BindException bindException = new BindException(sucursalError, "sucursal");
+		bindException.rejectValue("nombre", "notBlank", "El nombre es obligatorio");
+
+		when(sucursalService.save(any(Sucursal.class))).thenReturn(Mono.error(bindException));
+
+		MockServerRequest mockRequest = MockServerRequest.builder().body(Mono.just(sucursalError));
+
+		Mono<ServerResponse> responseMono = sucursalHandler.create(mockRequest);
+
+		StepVerifier.create(responseMono).consumeNextWith(response -> {
+			assertEquals(HttpStatus.BAD_REQUEST, response.statusCode());
+		}).verifyComplete();
+	}
+
+	@Test
+	void testUpdateNombre() {
+		Long id = 1L;
+		String nuevoNombre = "testEditado";
+		Long idFranquicia=1L;
+
+		Sucursal sucursalActualizada = new Sucursal(id, nuevoNombre,idFranquicia);
+
+		when(sucursalService.updateNombre(id, nuevoNombre)).thenReturn(Mono.just(sucursalActualizada));
+
+		MockServerRequest mockRequest = MockServerRequest.builder().pathVariable("id", id.toString())
+				.body(Mono.just(nuevoNombre));
+
+		Mono<ServerResponse> responseMono = sucursalHandler.updateNombre(mockRequest);
+
+		StepVerifier.create(responseMono).consumeNextWith(response -> {
+			assertEquals(HttpStatus.OK, response.statusCode());
+			assertEquals(MediaType.APPLICATION_JSON, response.headers().getContentType());
+		}).verifyComplete();
+
+		verify(sucursalService).updateNombre(anyLong(), anyString());
+	}
+
+	@Test
+	void testUpdateNombreWithError() {
+		Long id = 1L;
+		String nuevoNombre = "Nuevo Nombre Sucursal";
+		String mensajeError = "Sucursal no encontrada";
+
+		when(sucursalService.updateNombre(id, nuevoNombre))
+				.thenReturn(Mono.error(new IllegalArgumentException(mensajeError)));
+
+		MockServerRequest mockRequest = MockServerRequest.builder().pathVariable("id", id.toString())
+				.body(Mono.just(nuevoNombre));
+
+		Mono<ServerResponse> responseMono = sucursalHandler.updateNombre(mockRequest);
+
+		StepVerifier.create(responseMono).consumeNextWith(response -> {
+			assertEquals(HttpStatus.BAD_REQUEST, response.statusCode());
+		}).verifyComplete();
+	}
 }
