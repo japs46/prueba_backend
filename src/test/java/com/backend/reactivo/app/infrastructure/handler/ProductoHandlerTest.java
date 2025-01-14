@@ -1,216 +1,179 @@
 package com.backend.reactivo.app.infrastructure.handler;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.mock.web.reactive.function.server.MockServerRequest;
+import org.springframework.validation.BindException;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import com.backend.reactivo.app.aplication.request.UpdateStockRequest;
+import com.backend.reactivo.app.aplication.services.ProductoService;
 import com.backend.reactivo.app.domain.model.Producto;
-import com.backend.reactivo.app.domain.model.Sucursal;
-import com.backend.reactivo.app.infrastructure.config.RouterFunctionConfig;
 
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 @ExtendWith(MockitoExtension.class)
 public class ProductoHandlerTest {
-
+	
 	@Mock
-	private ProductoHandler handler;
-	
-	@InjectMocks 
-	private RouterFunctionConfig routerFunctionConfig;
+	private ProductoService productoService;
+
+	@InjectMocks
+	private ProductoHandler productoHandler;
 	
 	@Test
-	public void createProductoTest() {
+	public void createSuccessTest() {
+
 		Producto producto = new Producto(1L, "test", 3L,1L);
-		
-		Mono<ServerResponse> serverResponse = ServerResponse.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(producto);
-		
-		when(handler.create(any())).thenReturn(serverResponse);
-		
-		WebTestClient.bindToRouterFunction(routerFunctionConfig.routesProducto(handler))
-		.build().post().uri("/api/producto").contentType(MediaType.APPLICATION_JSON)
-		.accept(MediaType.APPLICATION_JSON).body(Mono.just(producto), Producto.class).exchange()
-		.expectStatus().isOk().expectHeader().contentType(MediaType.APPLICATION_JSON).expectBody()
-		.jsonPath("$.id").isNotEmpty()
-		.jsonPath("$.nombre").isEqualTo("test")
-		.jsonPath("$.stock").isEqualTo(3);
+		Mono<Producto> productoMono = Mono.just(producto);
+
+		when(productoService.save(any())).thenReturn(productoMono);
+
+		MockServerRequest mockRequest = MockServerRequest.builder().body(Mono.just(producto));
+
+		Mono<ServerResponse> responseMono = productoHandler.create(mockRequest);
+
+		StepVerifier.create(responseMono).consumeNextWith(response -> {
+			assertEquals(HttpStatus.OK, response.statusCode());
+			assertEquals(MediaType.APPLICATION_JSON, response.headers().getContentType());
+		}).verifyComplete();
+
+		verify(productoService).save(any());
+	}
+
+	@Test
+	void testCreateWithEmptyBody() {
+		MockServerRequest mockRequest = MockServerRequest.builder().body(Mono.empty());
+
+		Mono<ServerResponse> responseMono = productoHandler.create(mockRequest);
+
+		StepVerifier.create(responseMono).consumeNextWith(response -> {
+			assertEquals(HttpStatus.BAD_REQUEST, response.statusCode());
+			assertEquals(MediaType.TEXT_PLAIN, response.headers().getContentType());
+		}).verifyComplete();
+
+		verifyNoInteractions(productoService);
+	}
+
+	@Test
+	void testCreateWithValidationError() {
+		Producto productoError = new Producto(null, "",3L,1L);
+		BindException bindException = new BindException(productoError, "sucursal");
+		bindException.rejectValue("nombre", "notBlank", "El nombre es obligatorio");
+
+		when(productoService.save(any())).thenReturn(Mono.error(bindException));
+
+		MockServerRequest mockRequest = MockServerRequest.builder().body(Mono.just(productoError));
+
+		Mono<ServerResponse> responseMono = productoHandler.create(mockRequest);
+
+		StepVerifier.create(responseMono).consumeNextWith(response -> {
+			assertEquals(HttpStatus.BAD_REQUEST, response.statusCode());
+		}).verifyComplete();
+	}
+
+	@Test
+	void testUpdateNombreSuccess() {
+		Long id = 1L;
+		String nuevoNombre = "testEditado";
+		Long stock = 3L;
+		Long idFranquicia=1L;
+
+		Producto productoUpdate = new Producto(id, nuevoNombre,stock,idFranquicia);
+
+		when(productoService.updateNombre(id, nuevoNombre)).thenReturn(Mono.just(productoUpdate));
+
+		MockServerRequest mockRequest = MockServerRequest.builder().pathVariable("id", id.toString())
+				.body(Mono.just(nuevoNombre));
+
+		Mono<ServerResponse> responseMono = productoHandler.updateNombre(mockRequest);
+
+		StepVerifier.create(responseMono).consumeNextWith(response -> {
+			assertEquals(HttpStatus.OK, response.statusCode());
+			assertEquals(MediaType.APPLICATION_JSON, response.headers().getContentType());
+		}).verifyComplete();
+
+		verify(productoService).updateNombre(anyLong(), anyString());
+	}
+
+	@Test
+	void testUpdateNombreWithError() {
+		Long id = 1L;
+		String nuevoNombre = "Nuevo Nombre Producto";
+		String mensajeError = "Producto no encontrada";
+
+		when(productoService.updateNombre(id, nuevoNombre))
+				.thenReturn(Mono.error(new IllegalArgumentException(mensajeError)));
+
+		MockServerRequest mockRequest = MockServerRequest.builder().pathVariable("id", id.toString())
+				.body(Mono.just(nuevoNombre));
+
+		Mono<ServerResponse> responseMono = productoHandler.updateNombre(mockRequest);
+
+		StepVerifier.create(responseMono).consumeNextWith(response -> {
+			assertEquals(HttpStatus.BAD_REQUEST, response.statusCode());
+		}).verifyComplete();
 	}
 	
 	@Test
-	void createProductoErrorsTest() {
-		Producto producto = new Producto(null, "", 3L,1L);
+	void testUpdateStockSuccess() {
+		Long id = 1L;
+		String nombre = "test";
+		Long nuevoStock = 5L;
+		Long idFranquicia=1L;
 		
-		List<String> errors = Arrays.asList("El campo nombre no puede ser null o vacio");
-		
-		Mono<ServerResponse> serverResponse = ServerResponse.badRequest().bodyValue(errors);
-		
-		when(handler.create(any())).thenReturn(serverResponse);
-		
-		WebTestClient.bindToRouterFunction(routerFunctionConfig.routesProducto(handler))
-		.build().post().uri("/api/producto").contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON).body(Mono.just(producto), Producto.class).exchange()
-				.expectStatus().isBadRequest().expectHeader().contentType(MediaType.APPLICATION_JSON).expectBody()
-				.jsonPath("$[0]").isEqualTo("El campo nombre no puede ser null o vacio");
+		UpdateStockRequest updateStockRequest = new UpdateStockRequest(nuevoStock);
 
-	}
-	
-	@Test
-	void createProductoNullTest() {
-		
-		IllegalArgumentException illegalArgumentException = new IllegalArgumentException("El objeto producto no puede ser null");
-		
-		Mono<ServerResponse> serverResponse = ServerResponse.badRequest()
-	            .contentType(MediaType.TEXT_PLAIN)
-	            .bodyValue(illegalArgumentException.getMessage());
-		
-		when(handler.create(any())).thenReturn(serverResponse);
-		
-		WebTestClient.bindToRouterFunction(routerFunctionConfig.routesProducto(handler))
-		.build().post().uri("/api/producto").contentType(MediaType.APPLICATION_JSON)
-				.accept(MediaType.APPLICATION_JSON).body(Mono.empty(), Sucursal.class).exchange()
-				.expectStatus().isBadRequest().expectHeader().contentType(MediaType.TEXT_PLAIN)
-				.expectBody(String.class)
-		        .isEqualTo("El objeto producto no puede ser null");
-	}
-	
-	@Test
-	void deleteProductoSuccessTest() {
-	    Long productoId = 3L;
-	    
-	    Mono<ServerResponse> serverResponse = ServerResponse.noContent().build();
-	    
-	    when(handler.delete(any())).thenReturn(serverResponse);
+		Producto productoUpdate = new Producto(id, nombre,nuevoStock,idFranquicia);
 
-	    WebTestClient.bindToRouterFunction(routerFunctionConfig.routesProducto(handler))
-		.build().delete()
-	        .uri("/api/producto/{id}", productoId)
-	        .exchange()
-	        .expectStatus().isNoContent();
+		when(productoService.updateStock(id, nuevoStock)).thenReturn(Mono.just(productoUpdate));
+
+		MockServerRequest mockRequest = MockServerRequest.builder().pathVariable("id", id.toString())
+				.body(Mono.just(updateStockRequest));
+
+		Mono<ServerResponse> responseMono = productoHandler.updateStock(mockRequest);
+
+		StepVerifier.create(responseMono).consumeNextWith(response -> {
+			assertEquals(HttpStatus.OK, response.statusCode());
+			assertEquals(MediaType.APPLICATION_JSON, response.headers().getContentType());
+		}).verifyComplete();
+
+		verify(productoService).updateStock(anyLong(), anyLong());
 	}
 
 	@Test
-	void deleteProductoNotFoundTest() {
-	    Long productoId = 999L;
-	    
-	    String mensajeErrorTest= "Producto no encontrado con id: "+productoId;
-	    
-	    Mono<ServerResponse> serverResponse = ServerResponse.badRequest()
-        .bodyValue("Error eliminando el producto: " + mensajeErrorTest);
-	    
-	    when(handler.delete(any())).thenReturn(serverResponse);
+	void testUpdateStockWithError() {
+		Long id = 1L;
+		Long nuevoStock = 5L;
+		String mensajeError = "producto no encontrado";
+		
+		UpdateStockRequest updateStockRequest = new UpdateStockRequest(nuevoStock);
 
-	    WebTestClient.bindToRouterFunction(routerFunctionConfig.routesProducto(handler))
-		.build().delete()
-	        .uri("/api/producto/{id}", productoId)
-	        .exchange()
-	        .expectStatus().isBadRequest()
-	        .expectBody(String.class)
-	        .isEqualTo("Error eliminando el producto: Producto no encontrado con id: " + productoId);
-	}
-	
-	@Test
-	void updateStockTest() {
-	    Long productoId = 1L;
-	    UpdateStockRequest updateStockRequest= new UpdateStockRequest(4L);
-	    
-	    Producto updatedProducto = new Producto(1L, "test", 4L,1L);
-	    
-	    Mono<ServerResponse> serverResponse = ServerResponse.ok()
-        .contentType(MediaType.APPLICATION_JSON)
-        .bodyValue(updatedProducto);
-	    
-	    when(handler.updateStock(any())).thenReturn(serverResponse);
+		when(productoService.updateStock(id, nuevoStock))
+				.thenReturn(Mono.error(new IllegalArgumentException(mensajeError)));
 
-	    WebTestClient.bindToRouterFunction(routerFunctionConfig.routesProducto(handler))
-		.build().put().uri("/api/producto/update-stock/{id}", productoId)
-	            .contentType(MediaType.APPLICATION_JSON)
-	            .bodyValue(updateStockRequest)
-	            .exchange()
-	            .expectStatus().isOk()
-	            .expectBody()
-	            .jsonPath("$.id").isEqualTo(productoId)
-	            .jsonPath("$.stock").isEqualTo(4L);
+		MockServerRequest mockRequest = MockServerRequest.builder().pathVariable("id", id.toString())
+				.body(Mono.just(updateStockRequest));
+
+		Mono<ServerResponse> responseMono = productoHandler.updateStock(mockRequest);
+
+		StepVerifier.create(responseMono).consumeNextWith(response -> {
+			assertEquals(HttpStatus.BAD_REQUEST, response.statusCode());
+		}).verifyComplete();
 	}
 
-	@Test
-	void updateStockNotFoundTest() {
-	    Long productoId = 999L;
-	    UpdateStockRequest updateStockRequest= new UpdateStockRequest(4L);
-	    
-	    String mensajeErrorTest= "Producto no encontrado con id: "+productoId;
-	    
-	    Mono<ServerResponse> serverResponse = ServerResponse.badRequest()
-        .bodyValue(mensajeErrorTest);
-	    
-	    when(handler.updateStock(any())).thenReturn(serverResponse);
-
-	    WebTestClient.bindToRouterFunction(routerFunctionConfig.routesProducto(handler))
-		.build().put().uri("/api/producto/update-stock/{id}", productoId)
-	            .contentType(MediaType.APPLICATION_JSON)
-	            .bodyValue(updateStockRequest)
-	            .exchange()
-	            .expectStatus().isBadRequest()
-	            .expectBody(String.class)
-	            .isEqualTo("Producto no encontrado con id: " + productoId);
-	}
-	
-	@Test
-	void updateNombreTest() {
-	    Long productoId = 1L;
-	    String nombre= "test";
-	    
-	    Producto updatedProducto = new Producto(1L, "test", 4L,1L);
-	    
-	    Mono<ServerResponse> serverResponse = ServerResponse.ok()
-        .contentType(MediaType.APPLICATION_JSON)
-        .bodyValue(updatedProducto);
-	    
-	    when(handler.updateNombre(any())).thenReturn(serverResponse);
-
-	    WebTestClient.bindToRouterFunction(routerFunctionConfig.routesProducto(handler))
-		.build().put().uri("/api/producto/update-nombre/{id}", productoId)
-	            .contentType(MediaType.APPLICATION_JSON)
-	            .bodyValue(nombre)
-	            .exchange()
-	            .expectStatus().isOk()
-	            .expectBody()
-	            .jsonPath("$.id").isEqualTo(productoId)
-	            .jsonPath("$.stock").isEqualTo(4L);
-	}
-
-	@Test
-	void updateNombreNotFoundTest() {
-	    Long productoId = 999L;
-	    String nombre= "test";
-	    
-	    String mensajeErrorTest= "Producto no encontrado con id: "+productoId;
-	    
-	    Mono<ServerResponse> serverResponse = ServerResponse.badRequest()
-        .bodyValue(mensajeErrorTest);
-	    
-	    when(handler.updateNombre(any())).thenReturn(serverResponse);
-
-	    WebTestClient.bindToRouterFunction(routerFunctionConfig.routesProducto(handler))
-		.build().put().uri("/api/producto/update-nombre/{id}", productoId)
-	            .contentType(MediaType.APPLICATION_JSON)
-	            .bodyValue(nombre)
-	            .exchange()
-	            .expectStatus().isBadRequest()
-	            .expectBody(String.class)
-	            .isEqualTo("Producto no encontrado con id: " + productoId);
-	}
 }
