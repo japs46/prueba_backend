@@ -1,11 +1,17 @@
 variable "access_key" {
-  description = "AWS Access Key"
-  type        = string
-  sensitive   = true
+    description = "variable access_key"
+    type = string
+    sensitive = true
 }
 
 variable "secret_key" {
-  description = "AWS Secret Key"
-  type        = string
-  sensitive   = true
+    description = "variable secret_key"
+    type = string
+    sensitive = true
+}
+
+variable "region" {
+    description = "La región de AWS donde se desplegarán los recursos"
+    type = string
+    default     = "us-east-2"
 }
