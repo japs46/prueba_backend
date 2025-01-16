@@ -1,0 +1,72 @@
+---
+Resources:
+  MyECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: my-app-repo
+  MyExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: RolePruebaBackend
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess 
+  MyTaskDefinition:
+      Type: AWS::ECS::TaskDefinition
+      Properties:
+        Family: taskdef-prueba-backend
+        NetworkMode: awsvpc
+        RequiresCompatibilities:
+          - FARGATE
+        Cpu: "1024" # vCPU
+        Memory: "3072" # Memory in MiB
+        ExecutionRoleArn: !GetAtt MyExecutionRole.Arn
+        TaskRoleArn: !GetAtt MyExecutionRole.Arn
+        ContainerDefinitions:
+          - Name: my-app-container
+            Image: !Join
+              - ''
+              - - !GetAtt MyECRRepository.RepositoryUri
+                - ':latest'
+            PortMappings:
+              - ContainerPort: 8080
+                Protocol: tcp
+                Name: practica-8080-tcp
+                AppProtocol: http
+                HostPort: 8080
+            LogConfiguration:
+              LogDriver: awslogs
+              Options:
+                awslogs-group: /ecs/taskdef-prueba-backend
+                mode: non-blocking
+                awslogs-create-group: true
+                max-buffer-size: 25m
+                awslogs-region: us-east-2
+                awslogs-stream-prefix: ecs
+  MyECSCluster:
+      Type: AWS::ECS::Cluster
+      Properties:
+        ClusterName: cluster-prueba-back
+  MyECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref MyECSCluster
+      LaunchType: FARGATE
+      DesiredCount: 1
+      TaskDefinition: !Ref MyTaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - subnet-0d0c3f17b63ca82c3
+          SecurityGroups:
+            - sg-009e403e14f5dd18d
